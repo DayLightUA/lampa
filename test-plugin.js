@@ -1,17 +1,22 @@
 (function(){
-    console.log('💡 Plugin Loaded: Watching for select events');
+    console.log('🔎 Plugin Loaded: Watching ALL events');
 
     try {
-        Lampa.Listener.follow('select', function(e){
-            console.log('📥 Select Event:', e);
+        const events = [
+            'app', 'select', 'play', 'start', 'stop',
+            'navigation', 'activity', 'parser', 'search',
+            'view', 'back', 'open', 'torrent', 'video'
+        ];
 
-            if (e && e.url) {
-                // Show a notification popup
-                Lampa.Noty.show('🎬 Selected: ' + (e.title || e.url));
-
-                // Optional: You can now send this to Transmission
-                // We'll handle this in next steps
-            }
+        events.forEach(evt => {
+            Lampa.Listener.follow(evt, function(data){
+                console.log(`📡 Event: "${evt}"`, data);
+                if (data && data.title) {
+                    Lampa.Noty.show(`📡 ${evt}: ${data.title}`);
+                } else if (data && data.url) {
+                    Lampa.Noty.show(`📡 ${evt}: ${data.url}`);
+                }
+            });
         });
     } catch (err) {
         console.error('❌ Plugin Error:', err);
