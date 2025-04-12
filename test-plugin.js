@@ -1,14 +1,18 @@
 (function(){
-    console.log('💡 Plugin Loaded: Watching "torrent" event');
+    console.log('💡 Plugin Loaded: Pretty print "torrent" event on onenter');
 
     try {
         Lampa.Listener.follow('torrent', function(data){
-            console.log('🧲 Torrent Event Triggered:', data);
+            if (data && data.type === 'onenter') {
+                try {
+                    const formatted = JSON.stringify(data, null, 2); // 2-space indentation
+                    console.log('🧲 Torrent Event Data (formatted):');
 
-            if (data && data.file) {
-                Lampa.Noty.show('🧲 Torrent file: ' + data.file);
-            } else {
-                Lampa.Noty.show('🧲 Torrent event triggered');
+                    // Log each line separately
+                    formatted.split('\n').forEach(line => console.log(line));
+                } catch (jsonErr) {
+                    console.error('❌ JSON stringify failed:', jsonErr);
+                }
             }
         });
     } catch (err) {
