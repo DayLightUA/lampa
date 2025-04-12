@@ -4,6 +4,6 @@
     // Hook into LAMPA 'select' event
     Lampa.Listener.follow('select', function(e){
         console.log('🔄 Select event triggered!', e);
-        alert('Select event triggered!');
+        Lampa.Noty.show('✅ Select event triggered!\nevent:' + JSON.stringify(e));
     });
 })();
