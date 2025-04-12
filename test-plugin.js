@@ -1,22 +1,15 @@
 (function(){
-    console.log('🔎 Plugin Loaded: Watching ALL events');
+    console.log('💡 Plugin Loaded: Watching "torrent" event');
 
     try {
-        const events = [
-            'app', 'select', 'play', 'start', 'stop',
-            'navigation', 'activity', 'parser', 'search',
-            'view', 'back', 'open', 'torrent', 'video'
-        ];
+        Lampa.Listener.follow('torrent', function(data){
+            console.log('🧲 Torrent Event Triggered:', data);
 
-        events.forEach(evt => {
-            Lampa.Listener.follow(evt, function(data){
-                console.log(`📡 Event: "${evt}"`, data);
-                if (data && data.title) {
-                    Lampa.Noty.show(`📡 ${evt}: ${data.title}`);
-                } else if (data && data.url) {
-                    Lampa.Noty.show(`📡 ${evt}: ${data.url}`);
-                }
-            });
+            if (data && data.file) {
+                Lampa.Noty.show('🧲 Torrent file: ' + data.file);
+            } else {
+                Lampa.Noty.show('🧲 Torrent event triggered');
+            }
         });
     } catch (err) {
         console.error('❌ Plugin Error:', err);
