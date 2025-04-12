@@ -1,15 +1,22 @@
 (function(){
-    console.log('💡 Test Plugin Loaded');
+    console.log('💡 Plugin Loaded: Watching for select events');
 
     try {
-        Lampa.Listener.follow('app', function(e){
-            console.log('🚀 App event triggered', e);
-            Lampa.Noty.show('🚀 LAMPA App Ready!');
+        Lampa.Listener.follow('select', function(e){
+            console.log('📥 Select Event:', e);
+
+            if (e && e.url) {
+                // Show a notification popup
+                Lampa.Noty.show('🎬 Selected: ' + (e.title || e.url));
+
+                // Optional: You can now send this to Transmission
+                // We'll handle this in next steps
+            }
         });
     } catch (err) {
-        console.error('❌ Plugin runtime error:', err);
+        console.error('❌ Plugin Error:', err);
         if (typeof Lampa !== 'undefined' && Lampa.Noty) {
-            Lampa.Noty.show('❌ Plugin error: ' + err.message);
+            Lampa.Noty.show('❌ Error: ' + err.message);
         }
     }
 })();
