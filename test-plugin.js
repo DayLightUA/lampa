@@ -9,7 +9,7 @@
                     console.log('🧲 Torrent Event Data (formatted):');
 
                     // Log each line separately
-                    formatted.split('\n').forEach(line => console.log(line));
+                    formatted.split('\n').forEach(line => console.log('🧲 Torrent Event Data:' + line));
                 } catch (jsonErr) {
                     console.error('❌ JSON stringify failed:', jsonErr);
                 }
