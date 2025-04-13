@@ -96,16 +96,19 @@ try {
 
         function addSettingsTransmissionForwarder() {
             if (Lampa.Settings.main && Lampa.Settings.main() && !Lampa.Settings.main().render().find('[data-component="' + plugin_id + '"]').length) {
+                sendLogToAPI('Translate field', []);
                 const field = $(Lampa.Lang.translate(`
-                <div class="settings-folder selector" data-component="${plugin_id}">
-                    <div class="settings-folder__icon">
-                        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="white"/></svg>
+                    <div class="settings-folder selector" data-component="${plugin_id}">
+                        <div class="settings-folder__icon">
+                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="white"/></svg>
+                        </div>
+                        <div class="settings-folder__name">Transmission Forwarder</div>
                     </div>
-                    <div class="settings-folder__name">Transmission Forwarder</div>
-                </div>
-            `));
+                `));
 
+                sendLogToAPI('Render field', []);
                 Lampa.Settings.main().render().find('[data-component="more"]').after(field);
+                sendLogToAPI('Update field', []);
                 Lampa.Settings.main().update();
             }
         }
@@ -279,7 +282,7 @@ try {
         
         // Register the template with Lampa
         Lampa.Template.add('settings_' + plugin_id, settingsTemplate);
-        sendLogToAPI('settings_transmission_forwarder template registered', []);
+        sendLogToAPI('settings_{0} template registered', [plugin_id]);
         init(); // run immediately
     })();
 } catch (err) {
