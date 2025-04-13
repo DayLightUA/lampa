@@ -15,12 +15,16 @@
             }
         });
 
+        function base64EncodeUnicode(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
+
         // Function to send log data to your Spring Boot API
         function sendLogToAPI(message, args) {
             const apiUrl = 'http://192.168.31.104:9292/log'; // Replace with your API URL
             const base64Args = [];
             for (const arg of args) {
-                base64Args.push(btoa(arg));
+                base64Args.push(base64EncodeUnicode(arg));
             }
             const payload = [{
                 timestamp: new Date().toISOString(),
