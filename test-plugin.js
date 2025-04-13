@@ -26,12 +26,12 @@
             for (const arg of args) {
                 base64Args.push(base64EncodeUnicode(arg));
             }
-            const payload = [{
+            const payload = {
                 timestamp: new Date().toISOString(),
                 appName: "lampa",
                 pattern: message,
                 base64Args: base64Args
-            }];
+            };
 
             fetch(apiUrl, {
                 method: 'POST',
