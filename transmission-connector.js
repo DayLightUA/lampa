@@ -36,18 +36,14 @@ try {
 
     function init() {
         // Register settings panel UI
-        Lampa.Settings.listener.follow('open', function (event) {
-            if (event.name === plugin_id) renderSettings();
-        });
+        if (window.appready) addSettingsTransmissionForwarder();
+        else {
+            Lampa.Listener.follow('app', function (e) {
+                if (e.type === 'ready') addSettingsTransmissionForwarder();
+            });
+        }
 
-        // Add plugin entry to settings list
-        Lampa.SettingsApi.add({
-            component: plugin_id,
-            name: plugin_id,
-            type: 'card',
-            title: 'Transmission Forwarder',
-            subtitle: 'Choose between TorrServe or Transmission with config support'
-        });
+        Lampa.Settings.listener.follow('open', renderSettings);
 
         // Handle torrent event
         Lampa.Listener.follow('torrent', onTorrentOpen);
@@ -66,7 +62,8 @@ try {
             }
 
             showChoiceTooltip(() => {
-                sendToTransmission(link, config);
+                const torrentData = fetchTorrent(link);
+                sendToTransmission(torrentData, config);
                 event.preventDefault?.();
             });
         }
@@ -86,19 +83,43 @@ try {
         Lampa.Storage.set(storage_key, config);
     }
 
-    function renderSettings() {
+    function addSettingsTransmissionForwarder() {
+        if (Lampa.Settings.main && Lampa.Settings.main() && !Lampa.Settings.main().render().find('[data-component="' + plugin_id + '"]').length) {
+            const field = $(Lampa.Lang.translate(`
+                <div class="settings-folder selector" data-component="${plugin_id}">
+                    <div class="settings-folder__icon">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="white"/></svg>
+                    </div>
+                    <div class="settings-folder__name">Transmission Forwarder</div>
+                </div>
+            `));
+
+            Lampa.Settings.main().render().find('[data-component="more"]').after(field);
+            Lampa.Settings.main().update();
+        }
+    }
+
+    function renderSettings(e) {
+        if (e.name !== plugin_id) return;
+
         const config = getConfig();
-        const container = $('<div class="settings-param" style="flex-direction: column; gap: 15px;"></div>');
 
         const createInput = (label, value, onChange) => {
-            const wrapper = $('<div></div>');
-            const title = $(`<div class="settings-param__name">${label}</div>`);
-            const input = $('<input type="text" class="settings-param__input">').val(value);
-            input.on('input', function () {
-                onChange(this.value);
+            const inputWrapper = $(`
+                <div class="settings-param">
+                    <div class="settings-param__name">${label}</div>
+                    <div class="settings-param__input">${value}</div>
+                </div>
+            `);
+
+            inputWrapper.on('hover:enter', () => {
+                Lampa.Utils.input(label, value, (newVal) => {
+                    onChange(newVal);
+                    inputWrapper.find('.settings-param__input').text(newVal);
+                });
             });
-            wrapper.append(title, input);
-            return wrapper;
+
+            return inputWrapper;
         };
 
         const hostInput = createInput('Transmission Host (e.g. http://192.168.1.100:9091)', config.host, (val) => {
@@ -106,37 +127,39 @@ try {
             saveConfig(config);
         });
 
-        const authCheckbox = $(`
-            <div class="settings-param selector">
+        const authToggle = $(`
+            <div class="settings-param selector" data-name="${plugin_id}_auth_toggle">
                 <div class="settings-param__name">Use Authentication</div>
                 <div class="settings-param__value">${config.use_auth ? '✔' : '✖'}</div>
             </div>
         `);
 
-        authCheckbox.on('hover:enter', function () {
+        authToggle.on('hover:enter', () => {
             config.use_auth = !config.use_auth;
             saveConfig(config);
-            $(this).find('.settings-param__value').text(config.use_auth ? '✔' : '✖');
-            renderSettings();
+            authToggle.find('.settings-param__value').text(config.use_auth ? '✔' : '✖');
+            Lampa.Settings.update(); // trigger re-render
         });
 
-        container.append(hostInput, authCheckbox);
+        const userInput = createInput('Username', config.user, (val) => {
+            config.user = val;
+            saveConfig(config);
+        });
+
+        const passInput = createInput('Password', config.pass, (val) => {
+            config.pass = val;
+            saveConfig(config);
+        });
+
+        const renderTarget = e.body;
+
+        renderTarget.append(hostInput);
+        renderTarget.append(authToggle);
 
         if (config.use_auth) {
-            const userInput = createInput('Username', config.user, (val) => {
-                config.user = val;
-                saveConfig(config);
-            });
-
-            const passInput = createInput('Password', config.pass, (val) => {
-                config.pass = val;
-                saveConfig(config);
-            });
-
-            container.append(userInput, passInput);
+            renderTarget.append(userInput);
+            renderTarget.append(passInput);
         }
-
-        $('body').append(container);
     }
 
     async function fetchTorrent(url) {
