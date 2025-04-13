@@ -23,7 +23,7 @@ function sendLogToAPI(message, args = []) {
     })
         .then(response => response.json())
         .then(data => console.log('✅ Log sent to API:', data))
-        .catch(err => console.error('❌ Failed to log to API:', err));
+        .catch(err => console.error('❌ Failed to log to API:', err.getMessage()));
 }
 
 function base64EncodeUnicode(str) {
