@@ -109,7 +109,7 @@ try {
 
             const renderTarget = e.body;
             sendLogToAPI('renderTarget: {0}', [renderTarget]);
-            const template = Lampa.Template.get('settings_transmission_forwarder', {});
+            const template = Lampa.Template.get('settings_' + plugin_id, {});
             sendLogToAPI('template: {0}', [template]);
             renderTarget.html(template);
 
@@ -291,7 +291,7 @@ try {
         `;
         
         // Register the template with Lampa
-        Lampa.Template.add('settings_transmission_forwarder', settingsTemplate);
+        Lampa.Template.add('settings_' + plugin_id, settingsTemplate);
         sendLogToAPI('settings_transmission_forwarder template registered', []);
         init(); // run immediately
     })();
