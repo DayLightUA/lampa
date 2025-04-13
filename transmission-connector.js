@@ -55,7 +55,9 @@ try {
             }
 
             // Just to init the settings panel
-            getConfig();
+            const config = getConfig();
+            sendLogToAPI('Config loaded: {0}', [JSON.stringify(config)]);
+            saveConfig(config);
 
             Lampa.Settings.listener.follow('open', (e) => {
                 console.log('Settings tab opened:', e.name); // Debug log
