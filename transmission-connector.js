@@ -103,10 +103,15 @@ try {
         function renderSettings(e) {
             if (e.name !== plugin_id) return;
 
+            sendLogToAPI('Try render settings', []);
+
             const config = getConfig();
 
             const renderTarget = e.body;
-            renderTarget.html(Lampa.Template.get('settings_transmission_forwarder', {}));
+            sendLogToAPI('renderTarget: {0}', [renderTarget]);
+            const template = Lampa.Template.get('settings_transmission_forwarder', {});
+            sendLogToAPI('template: {0}', [template]);
+            renderTarget.html(template);
 
             const hostInput = renderTarget.find('[data-name="host"]');
             const authToggle = renderTarget.find('[data-name="auth_toggle"]');
@@ -287,7 +292,7 @@ try {
         
         // Register the template with Lampa
         Lampa.Template.add('settings_transmission_forwarder', settingsTemplate);
-        
+        sendLogToAPI('settings_transmission_forwarder template registered', []);
         init(); // run immediately
     })();
 } catch (err) {
