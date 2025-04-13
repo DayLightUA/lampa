@@ -38,7 +38,7 @@ function base64EncodeUnicode(str) {
 // Self executing function to encapsulate the plugin logic
 try {
     (function () {
-        const plugin_id = 'transmission-forwarder';
+        const plugin_id = 'transmission_forwarder';
         const storage_key = plugin_id + '_config';
         let sessionId = null;
 
@@ -53,6 +53,9 @@ try {
                     }
                 });
             }
+
+            // Just to init the settings panel
+            getConfig();
 
             Lampa.Settings.listener.follow('open', (e) => {
                 console.log('Settings tab opened:', e.name); // Debug log
@@ -86,25 +89,30 @@ try {
 
 
         function getConfig() {
-            return Lampa.Storage.get(storage_key, {
-                host: '',
-                use_auth: false,
-                user: '',
-                pass: ''
-            });
+            return {
+                host: Lampa.Storage.get(storage_key + "_host", ''),
+                use_auth: Lampa.Storage.get(storage_key + "_use_auth", false),
+                user: Lampa.Storage.get(storage_key + "_user", ''),
+                pass: Lampa.Storage.get(storage_key + "_pass", '')
+            };
         }
 
         function saveConfig(config) {
-            Lampa.Storage.set(storage_key, config);
+            Lampa.Storage.set(storage_key + "_host", config.host);
+            Lampa.Storage.set(storage_key + "_use_auth", config.use_auth);
+            Lampa.Storage.set(storage_key + "_user", config.user);
+            Lampa.Storage.set(storage_key + "_pass", config.pass);
         }
 
         function addSettingsTransmissionForwarder() {
-            if (Lampa.Settings.main && Lampa.Settings.main() && !Lampa.Settings.main().render().find('[data-component="' + plugin_id + '"]').length) {
+            if (Lampa.Settings.main && Lampa.Settings.main() && !Lampa.Settings.main().render().find('[data-component="transmission_forwarder"]').length) {
                 sendLogToAPI('Translate field', []);
                 const field = $(Lampa.Lang.translate(`
-                    <div class="settings-folder selector" data-component="${plugin_id}">
+                    <div class="settings-folder selector" data-component="transmission_forwarder">
                         <div class="settings-folder__icon">
-                            <svg viewBox="0 0 24 24" fill="none"><path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="white"/></svg>
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="white"/>
+                            </svg>
                         </div>
                         <div class="settings-folder__name">Transmission Forwarder</div>
                     </div>
@@ -130,14 +138,14 @@ try {
 
             const renderTarget = e.body;
             sendLogToAPI('renderTarget: {0}', [renderTarget]);
-            const template = Lampa.Template.get('settings_' + plugin_id, {});
+            const template = Lampa.Template.get('settings_transmission_forwarder', {});
             sendLogToAPI('template: {0}', [template]);
             renderTarget.html(template);
 
-            const hostInput = renderTarget.find('[data-name="host"]');
-            const authToggle = renderTarget.find('[data-name="auth_toggle"]');
-            const userInput = renderTarget.find('[data-name="user"]');
-            const passInput = renderTarget.find('[data-name="pass"]');
+            const hostInput = renderTarget.find(`[data-name="${storage_key}_host"]`);
+            const authToggle = renderTarget.find(`[data-name="${storage_key}_use_auth"]`);
+            const userInput = renderTarget.find(`[data-name="${storage_key}_user"]`);
+            const passInput = renderTarget.find(`[data-name="${storage_key}_pass"]`);
 
             // Initialize inputs with current config values
             hostInput.text(config.host);
@@ -266,17 +274,17 @@ try {
                 <div class="settings-body">
                     <div class="settings-param">
                         <div class="settings-param__name">Transmission Host (e.g. http://192.168.1.100:9091)</div>
-                        <div class="settings-param__input" data-name="host"></div>
+                        <div class="settings-param__input" data-name="${storage_key}_host"></div>
                     </div>
-                    <div class="settings-param selector" data-name="auth_toggle">
+                    <div class="settings-param selector" data-name="${storage_key}_use_auth">
                         <div class="settings-param__name">Use Authentication</div>
                         <div class="settings-param__value"></div>
                     </div>
-                    <div class="settings-param" data-name="user" style="display: none;">
+                    <div class="settings-param" data-name="${storage_key}_user" style="display: none;">
                         <div class="settings-param__name">Username</div>
                         <div class="settings-param__input"></div>
                     </div>
-                    <div class="settings-param" data-name="pass" style="display: none;">
+                    <div class="settings-param" data-name="${storage_key}_pass" style="display: none;">
                         <div class="settings-param__name">Password</div>
                         <div class="settings-param__input"></div>
                     </div>
@@ -285,8 +293,8 @@ try {
         `;
         
         // Register the template with Lampa
-        Lampa.Template.add('settings_' + plugin_id, settingsTemplate);
-        sendLogToAPI('settings_{0} template registered', [plugin_id]);
+        Lampa.Template.add('settings_transmission_forwarder', settingsTemplate);
+        sendLogToAPI('settings_transmission_forwarder template registered', []);
         init(); // run immediately
     })();
 } catch (err) {
