@@ -56,6 +56,7 @@ try {
 
             // Just to init the settings panel
             const config = getConfig();
+            config.use_auth = false;
             sendLogToAPI('Config loaded: {0}', [JSON.stringify(config)]);
             saveConfig(config);
 
