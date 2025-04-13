@@ -54,7 +54,11 @@ try {
                 });
             }
 
-            Lampa.Settings.listener.follow('open', renderSettings);
+            Lampa.Settings.listener.follow('open', (e) => {
+                console.log('Settings tab opened:', e.name); // Debug log
+                sendLogToAPI('Settings tab opened: {0}', [e.name]);
+                renderSettings(e);
+            });
 
             // Handle torrent event
             Lampa.Listener.follow('torrent', onTorrentOpen);
