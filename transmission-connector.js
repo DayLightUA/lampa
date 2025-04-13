@@ -35,42 +35,43 @@ try {
     let sessionId = null;
 
     function init() {
-        Lampa.Settings.listener.follow('open', function (e) {
-            if (e.name === plugin_id) renderSettings();
+        // Register settings panel UI
+        Lampa.Settings.listener.follow('open', function (event) {
+            if (event.name === plugin_id) renderSettings();
         });
 
-        Lampa.Settings.add({
+        // Add plugin entry to settings list
+        Lampa.SettingsApi.add({
+            component: plugin_id,
             name: plugin_id,
+            type: 'card',
             title: 'Transmission Forwarder',
-            component: renderSettings,
-            onBack: () => {}
+            subtitle: 'Choose between TorrServe or Transmission with config support'
         });
 
-        Lampa.Listener.follow('torrent', async (e) => {
-            if (e.type === 'onenter') {
-                const link = e.element?.Link;
-                if (!link) return;
-
-                const config = getConfig();
-                if (!config.host) {
-                    Lampa.Noty.show('Transmission host not configured!');
-                    return;
-                }
-
-                showChoiceTooltip(async () => {
-                    try {
-                        const torrentData = await fetchTorrent(link);
-                        const base64Torrent = arrayBufferToBase64(torrentData);
-                        sendToTransmission(base64Torrent, config);
-                    } catch (err) {
-                        sendLogToAPI('❌ Failed to fetch or convert torrent: {0}', [err.message]);
-                        console.error('Failed to fetch or convert torrent:', err);
-                        Lampa.Noty.show('Failed to process .torrent file');
-                    }
-                });
-            }
-        });
+        // Handle torrent event
+        Lampa.Listener.follow('torrent', onTorrentOpen);
     }
+
+    // Torrent event handler
+    function onTorrentOpen(event) {
+        if (event.type === 'open') {
+            const link = event.data?.file || event.data?.url || event.data?.link;
+            if (!link) return;
+
+            const config = getConfig();
+            if (!config.host) {
+                Lampa.Noty.show('Transmission host not configured!');
+                return;
+            }
+
+            showChoiceTooltip(() => {
+                sendToTransmission(link, config);
+                event.preventDefault?.();
+            });
+        }
+    }
+
 
     function getConfig() {
         return Lampa.Storage.get(storage_key, {
