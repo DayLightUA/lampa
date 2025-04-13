@@ -1,11 +1,18 @@
 // Top-level logging function
 function sendLogToAPI(message, args = []) {
     const apiUrl = 'http://192.168.31.104:9292/log'; // Replace with your API URL
+    try {
+        args = args.map(arg => base64EncodeUnicode(arg));
+    } catch (e) {
+        console.error('❌ Failed to encode arguments:', e);
+        sendLogToAPI('❌ Failed to encode arguments: {0}', [e.message]);
+        args = [];
+    
     const payload = {
         timestamp: new Date().toISOString(),
         appName: "lampa",
         pattern: message,
-        base64Args: args.map(arg => base64EncodeUnicode(arg))
+        base64Args: args
     };
 
     fetch(apiUrl, {
