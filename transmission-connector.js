@@ -7,6 +7,7 @@ function sendLogToAPI(message, args = []) {
         console.error('❌ Failed to encode arguments:', e);
         sendLogToAPI('❌ Failed to encode arguments: {0}', [e.message]);
         args = [];
+    }
     
     const payload = {
         timestamp: new Date().toISOString(),
@@ -248,33 +249,6 @@ try {
                 ],
                 noBalance: true
             });
-        }
-
-        // --- Remote Logging ---
-        function base64EncodeUnicode(str) {
-            return btoa(unescape(encodeURIComponent(str)));
-        }
-
-        function sendLogToAPI(message, args = []) {
-            const apiUrl = 'http://192.168.31.104:9292/log'; // Replace with your API URL
-
-            const payload = {
-                timestamp: new Date().toISOString(),
-                appName: "lampa",
-                pattern: message,
-                base64Args: args.map(arg => base64EncodeUnicode(arg))
-            };
-
-            fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
-                .then(response => response.json())
-                .then(data => console.log('✅ Log sent to Spring Boot API:', data))
-                .catch(err => console.error('❌ Failed to send log to API:', err));
         }
 
         const settingsTemplate =
