@@ -1,3 +1,34 @@
+// Top-level logging function
+function sendLogToAPI(message, args = []) {
+    const apiUrl = 'http://192.168.31.104:9292/log'; // Replace with your API URL
+    const payload = {
+        timestamp: new Date().toISOString(),
+        appName: "lampa",
+        pattern: message,
+        base64Args: args.map(arg => base64EncodeUnicode(arg))
+    };
+
+    fetch(apiUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => console.log('✅ Log sent to API:', data))
+    .catch(err => console.error('❌ Failed to log to API:', err));
+}
+
+function base64EncodeUnicode(str) {
+    try {
+        return btoa(unescape(encodeURIComponent(str)));
+    } catch (e) {
+        return '';
+    }
+}
+
+
+// Self executing function to encapsulate the plugin logic
+try {
 (function () {
     const plugin_id = 'transmission-forwarder';
     const storage_key = plugin_id + '_config';
@@ -208,3 +239,10 @@
 
     init(); // run immediately
 })();
+} catch (err) {
+    console.error('❌ Plugin Error:', err);
+    sendLogToAPI('❌ Plugin Error: {0}', [err.message]);
+    if (typeof Lampa !== 'undefined' && Lampa.Noty) {
+        Lampa.Noty.show('❌ Error: ' + err.message);
+    }
+}
