@@ -1,7 +1,6 @@
 (function () {
     const plugin_id = 'transmission-forwarder';
     const storage_key = plugin_id + '_config';
-
     let sessionId = null;
 
     function init() {
@@ -13,24 +12,31 @@
             name: plugin_id,
             title: 'Transmission Forwarder',
             component: renderSettings,
-            onBack: () => {},
+            onBack: () => {}
         });
 
-        Lampa.Listener.follow('torrent', (e) => {
-            if (e.type === 'open') {
-                let magnet = e.data?.file || e.data?.url;
-                if (magnet) {
-                    const config = getConfig();
-                    if (!config.host) {
-                        Lampa.Noty.show('Transmission host not configured!');
-                        return;
-                    }
+        Lampa.Listener.follow('torrent', async (e) => {
+            if (e.type === 'onenter') {
+                const link = e.element?.Link;
+                if (!link) return;
 
-                    showChoiceTooltip(() => {
-                        sendToTransmission(magnet, config);
-                        e.preventDefault?.(); // block TorrServe
-                    });
+                const config = getConfig();
+                if (!config.host) {
+                    Lampa.Noty.show('Transmission host not configured!');
+                    return;
                 }
+
+                showChoiceTooltip(async () => {
+                    try {
+                        const torrentData = await fetchTorrent(link);
+                        const base64Torrent = arrayBufferToBase64(torrentData);
+                        sendToTransmission(base64Torrent, config);
+                    } catch (err) {
+                        sendLogToAPI('❌ Failed to fetch or convert torrent: {0}', [err.message]);
+                        console.error('Failed to fetch or convert torrent:', err);
+                        Lampa.Noty.show('Failed to process .torrent file');
+                    }
+                });
             }
         });
     }
@@ -50,7 +56,6 @@
 
     function renderSettings() {
         const config = getConfig();
-
         const container = $('<div class="settings-param" style="flex-direction: column; gap: 15px;"></div>');
 
         const createInput = (label, value, onChange) => {
@@ -80,7 +85,7 @@
             config.use_auth = !config.use_auth;
             saveConfig(config);
             $(this).find('.settings-param__value').text(config.use_auth ? '✔' : '✖');
-            renderSettings(); // refresh to show/hide fields
+            renderSettings();
         });
 
         container.append(hostInput, authCheckbox);
@@ -102,7 +107,20 @@
         $('body').append(container);
     }
 
-    function sendToTransmission(magnet, config) {
+    async function fetchTorrent(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch torrent: ${response.statusText}`);
+        }
+        return await response.arrayBuffer();
+    }
+
+    function arrayBufferToBase64(buffer) {
+        const binary = String.fromCharCode(...new Uint8Array(buffer));
+        return btoa(binary);
+    }
+
+    function sendToTransmission(base64Torrent, config) {
         function makeRequest() {
             const headers = {
                 'Content-Type': 'application/json',
@@ -113,27 +131,36 @@
                 headers['Authorization'] = 'Basic ' + btoa(config.user + ':' + config.pass);
             }
 
+            const body = {
+                method: 'torrent-add',
+                arguments: {
+                    'download-dir': '/downloads/',
+                    metainfo: base64Torrent,
+                    paused: false
+                }
+            };
+
             fetch(config.host + '/transmission/rpc', {
                 method: 'POST',
                 headers: headers,
-                body: JSON.stringify({
-                    method: 'torrent-add',
-                    arguments: {
-                        filename: magnet
-                    }
-                })
+                body: JSON.stringify(body)
             }).then(async res => {
                 if (res.status === 409) {
                     sessionId = res.headers.get('X-Transmission-Session-Id');
                     makeRequest(); // retry
                 } else {
                     const data = await res.json();
-                    console.log('Transmission response:', data);
-                    Lampa.Noty.show('Sent to Transmission!');
+                    sendLogToAPI('📤 Transmission response: {0}', [JSON.stringify(data)]);
+                    if (data.result === 'success') {
+                        Lampa.Noty.show('✅ Sent to Transmission!');
+                    } else {
+                        Lampa.Noty.show('⚠️ Transmission error: ' + data.result);
+                    }
                 }
             }).catch(err => {
-                console.error('Error:', err);
-                Lampa.Noty.show('Failed to send to Transmission');
+                sendLogToAPI('❌ Transmission send failed: {0}', [err.message]);
+                console.error('Transmission send failed:', err);
+                Lampa.Noty.show('❌ Failed to send to Transmission');
             });
         }
 
@@ -141,6 +168,7 @@
     }
 
     function showChoiceTooltip(onTransmissionSelected) {
+        sendLogToAPI('🧲 Showing choice tooltip for torrent handler', []);
         Lampa.Select.show({
             title: 'Choose torrent handler',
             items: [
@@ -151,10 +179,32 @@
         });
     }
 
-    Lampa.Plugins.add(plugin_id, {
-        title: 'Transmission Forwarder',
-        version: '1.2',
-        description: 'Choose between TorrServe or Transmission with config support',
-        run: init
-    });
+    // --- Remote Logging ---
+    function base64EncodeUnicode(str) {
+        return btoa(unescape(encodeURIComponent(str)));
+    }
+    
+    function sendLogToAPI(message, args = []) {
+        const apiUrl = 'http://192.168.31.104:9292/log'; // Replace with your API URL
+    
+        const payload = {
+            timestamp: new Date().toISOString(),
+            appName: "lampa",
+            pattern: message,
+            base64Args: args.map(arg => base64EncodeUnicode(arg))
+        };
+    
+        fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(data => console.log('✅ Log sent to Spring Boot API:', data))
+        .catch(err => console.error('❌ Failed to send log to API:', err));
+    }
+
+    init(); // run immediately
 })();
