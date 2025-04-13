@@ -39,7 +39,10 @@ try {
             if (window.appready) addSettingsTransmissionForwarder();
             else {
                 Lampa.Listener.follow('app', function (e) {
-                    if (e.type === 'ready') addSettingsTransmissionForwarder();
+                    if (e.type === 'ready'){
+                        sendLogToAPI('App ready event received, addSettingsTransmissionForwarder', []);
+                        addSettingsTransmissionForwarder();
+                    }
                 });
             }
 
@@ -101,6 +104,9 @@ try {
 
 
         function renderSettings(e) {
+            if (e.name !== undefined && e.name.includes(plugin_id)){
+                sendLogToAPI('Received event: {0}', [e.name]);
+            }
             if (e.name !== plugin_id) return;
 
             sendLogToAPI('Try render settings', []);
