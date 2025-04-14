@@ -38,6 +38,8 @@ function base64EncodeUnicode(str) {
 // Self executing function to encapsulate the plugin logic
 try {
     (function () {
+        'use strict';
+        
         const plugin_id = 'transmission_forwarder';
         const storage_key = plugin_id + '_config';
         const CONFIG_KEY_HOST = storage_key + '_host';
