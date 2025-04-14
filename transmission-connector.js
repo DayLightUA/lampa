@@ -78,12 +78,6 @@ try {
                 });
             }
 
-            Lampa.Settings.listener.follow('open', (e) => {
-                console.log('Settings tab opened:', e.name); // Debug log
-                sendLogToAPI('Settings tab opened: {0}', [e.name]);
-                renderSettings(e);
-            });
-
             // Handle torrent event
             Lampa.Listener.follow('torrent', onTorrentOpen);
         }
@@ -128,6 +122,7 @@ try {
         }
 
         function addSettingsTransmissionForwarder() {
+            sendLogToAPI('Adding settings component for Transmission Forwarder', []);
             if (!window.lampa_settings[plugin_id]) {
                 Lampa.SettingsApi.addComponent({
                     component: plugin_id,
@@ -138,6 +133,7 @@ try {
         }
 
         function addTransmissionSettingsParams() {
+            sendLogToAPI('Adding settings parameters for Transmission Forwarder', []);
             Lampa.SettingsApi.addParam({
                 component: plugin_id,
                 param: {
