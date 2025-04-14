@@ -46,7 +46,7 @@ try {
         const CONFIG_KEY_PASS = storage_key + '_pass';
         const CONFIG_KEY_TRANSMISSION_SESSION = storage_key + '_transmission_session';
 
-        function init() {
+        async function init() {
             const manifest = {
                 type: 'settings',
                 version: '1.0.0',
@@ -66,14 +66,14 @@ try {
 
             // Register settings panel UI
             if (window.appready) {
-                addSettingsTransmissionForwarder();
-                addTransmissionSettingsParams();
+                await addSettingsTransmissionForwarder();
+                await addTransmissionSettingsParams();
             } else {
-                Lampa.Listener.follow('app', function (e) {
+                Lampa.Listener.follow('app', async function (e) {
                     if (e.type === 'ready') {
                         sendLogToAPI('App ready event received, addSettingsTransmissionForwarder', []);
-                        addSettingsTransmissionForwarder();
-                        addTransmissionSettingsParams();
+                        await addSettingsTransmissionForwarder();
+                        await addTransmissionSettingsParams();
                     }
                 });
             }
@@ -121,7 +121,7 @@ try {
             Lampa.Storage.set(CONFIG_KEY_TRANSMISSION_SESSION, config.sessionId);
         }
 
-        function addSettingsTransmissionForwarder() {
+        async function addSettingsTransmissionForwarder() {
             sendLogToAPI('Adding settings component for Transmission Forwarder', []);
             if (!window.lampa_settings[plugin_id]) {
                 sendLogToAPI('Create settings component {0}', [plugin_id]);
@@ -140,7 +140,7 @@ try {
             }
         }
 
-        function addTransmissionSettingsParams() {
+        async function addTransmissionSettingsParams() {
             sendLogToAPI('Adding settings parameters for Transmission Forwarder', []);
             Lampa.SettingsApi.addParam({
                 component: plugin_id,
@@ -221,18 +221,28 @@ try {
         }
 
         function setAuthFieldsVisible(visible) {
-            const usernameField = $(`div[data-name="${CONFIG_KEY_USER}"]`);
-            const passwordField = $(`div[data-name="${CONFIG_KEY_PASS}"]`);
-            sendLogToAPI('usernameField: {0}', [usernameField.prop('outerHTML')]);
-            sendLogToAPI('passwordField: {0}', [passwordField.prop('outerHTML')]);
-
-            if (visible) {
-                usernameField.show();
-                passwordField.show();
-            } else {
-                usernameField.hide();
-                passwordField.hide();
-            }
+            setTimeout(() => {
+                const usernameField = $(`div[data-name="${CONFIG_KEY_USER}"]`);
+                const passwordField = $(`div[data-name="${CONFIG_KEY_PASS}"]`);
+        
+                if (usernameField.length === 0 || passwordField.length === 0) {
+                    sendLogToAPI('Error: Username or Password field not found', []);
+                    return;
+                }
+        
+                sendLogToAPI('usernameField HTML: {0}', [usernameField.prop('outerHTML')]);
+                sendLogToAPI('passwordField HTML: {0}', [passwordField.prop('outerHTML')]);
+        
+                if (visible) {
+                    usernameField.show();
+                    passwordField.show();
+                    sendLogToAPI('Auth fields are now visible', []);
+                } else {
+                    usernameField.hide();
+                    passwordField.hide();
+                    sendLogToAPI('Auth fields are now hidden', []);
+                }
+            }, 100); // Delay by 100ms to allow DOM rendering
         }
 
         async function fetchTorrent(url) {
