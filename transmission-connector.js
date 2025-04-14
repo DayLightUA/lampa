@@ -38,8 +38,6 @@ function base64EncodeUnicode(str) {
 // Self executing function to encapsulate the plugin logic
 try {
     (function () {
-        'use strict';
-        
         const plugin_id = 'transmission_forwarder';
         const storage_key = plugin_id + '_config';
         const CONFIG_KEY_HOST = storage_key + '_host';
@@ -59,6 +57,7 @@ try {
 
             // Register the plugin manifest
             Lampa.Manifest.plugins = manifest;
+            Lampa.Component.add(plugin_id, component);
 
             // Init plugin configuration
             const config = getConfig();
@@ -82,6 +81,17 @@ try {
 
             // Handle torrent event
             Lampa.Listener.follow('torrent', onTorrentOpen);
+        }
+
+        function component(object) {
+            var comp = new Lampa.InteractionCategory(object);
+            comp.create = function() {
+                Api.full(object, this.build.bind(this), this.empty.bind(this));
+            };
+            comp.nextPageReuest = function(object, resolve, reject) {
+                Api.full(object, resolve.bind(comp), reject.bind(comp));
+            };
+            return comp;
         }
 
         // Torrent event handler
@@ -158,7 +168,8 @@ try {
                 component: plugin_id,
                 param: {
                     name: CONFIG_KEY_HOST,
-                    type: 'input'
+                    type: 'input',
+                    default: 'http://192.168.1.100:9091'
                 },
                 field: {
                     name: 'Transmission Host',
