@@ -8,7 +8,7 @@ function sendLogToAPI(message, args = []) {
         sendLogToAPI('❌ Failed to encode arguments: {0}', [e.message]);
         args = [];
     }
-    
+
     const payload = {
         timestamp: new Date().toISOString(),
         appName: "lampa",
@@ -54,7 +54,7 @@ try {
                 description: 'Plugin to forward torrents to Transmission',
                 component: 'transmission_forwarder'
             };
-        
+
             // Register the plugin manifest
             Lampa.Manifest.plugins = manifest;
 
@@ -124,6 +124,7 @@ try {
         function addSettingsTransmissionForwarder() {
             sendLogToAPI('Adding settings component for Transmission Forwarder', []);
             if (!window.lampa_settings[plugin_id]) {
+                sendLogToAPI('Create settings component {0}', [plugin_id]);
                 Lampa.SettingsApi.addComponent({
                     component: plugin_id,
                     icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="currentColor"/></svg>',
@@ -143,7 +144,7 @@ try {
                     name: 'Transmission Settings'
                 }
             });
-    
+
             Lampa.SettingsApi.addParam({
                 component: plugin_id,
                 param: {
@@ -159,7 +160,7 @@ try {
                     Lampa.Storage.set(CONFIG_KEY_HOST, value);
                 }
             });
-    
+
             Lampa.SettingsApi.addParam({
                 component: plugin_id,
                 param: {
@@ -177,7 +178,7 @@ try {
                     sendLogToAPI('Authentication setting changed: {0}', [value]);
                 }
             });
-    
+
             Lampa.SettingsApi.addParam({
                 component: plugin_id,
                 param: {
@@ -193,7 +194,7 @@ try {
                     Lampa.Storage.set(CONFIG_KEY_USER, value);
                 }
             });
-    
+
             Lampa.SettingsApi.addParam({
                 component: plugin_id,
                 param: {
@@ -209,12 +210,15 @@ try {
                     Lampa.Storage.get(CONFIG_KEY_PASS, value);
                 }
             });
+            setAuthFieldsVisible(Lampa.Storage.get(CONFIG_KEY_USE_AUTH, false));
         }
 
-        function setAuthFieldsVisible(visible) {        
+        function setAuthFieldsVisible(visible) {
             const usernameField = $(`div[data-name="${CONFIG_KEY_USER}"]`);
             const passwordField = $(`div[data-name="${CONFIG_KEY_PASS}"]`);
-        
+            sendLogToAPI('usernameField: {0}', [JSON.stringify(usernameField)]);
+            sendLogToAPI('passwordField: {0}', [JSON.stringify(passwordField)]);
+
             if (visible) {
                 usernameField.show();
                 passwordField.show();
