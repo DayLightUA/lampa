@@ -152,21 +152,21 @@ try {
                 }
             });
 
-            // Lampa.SettingsApi.addParam({
-            //     component: plugin_id,
-            //     param: {
-            //         name: CONFIG_KEY_HOST,
-            //         type: 'input',
-            //         default: ''
-            //     },
-            //     field: {
-            //         name: 'Transmission Host',
-            //         description: 'Enter the Transmission RPC URL (e.g., http://192.168.1.100:9091)'
-            //     },
-            //     onChange: (value) => {
-            //         Lampa.Storage.set(CONFIG_KEY_HOST, value);
-            //     }
-            // });
+            Lampa.SettingsApi.addParam({
+                component: plugin_id,
+                param: {
+                    name: CONFIG_KEY_HOST,
+                    type: 'input',
+                    default: 'http://192.168.1.100:9091'
+                },
+                field: {
+                    name: 'Transmission Host',
+                    description: 'Enter the Transmission RPC URL (e.g., http://192.168.1.100:9091)'
+                },
+                onChange: (value) => {
+                    Lampa.Storage.set(CONFIG_KEY_HOST, value);
+                }
+            });
 
             // Lampa.SettingsApi.addParam({
             //     component: plugin_id,
