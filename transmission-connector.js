@@ -40,25 +40,43 @@ try {
     (function () {
         const plugin_id = 'transmission_forwarder';
         const storage_key = plugin_id + '_config';
-        let sessionId = null;
+        const CONFIG_KEY_HOST = storage_key + '_host';
+        const CONFIG_KEY_USE_AUTH = storage_key + '_use_auth';
+        const CONFIG_KEY_USER = storage_key + '_user';
+        const CONFIG_KEY_PASS = storage_key + '_pass';
+        const CONFIG_KEY_TRANSMISSION_SESSION = storage_key + '_transmission_session';
 
         function init() {
-            // Register settings panel UI
-            if (window.appready) addSettingsTransmissionForwarder();
-            else {
-                Lampa.Listener.follow('app', function (e) {
-                    if (e.type === 'ready'){
-                        sendLogToAPI('App ready event received, addSettingsTransmissionForwarder', []);
-                        addSettingsTransmissionForwarder();
-                    }
-                });
-            }
+            const manifest = {
+                type: 'settings',
+                version: '1.0.0',
+                name: 'Transmission Forwarder',
+                description: 'Plugin to forward torrents to Transmission',
+                component: 'transmission_forwarder'
+            };
+        
+            // Register the plugin manifest
+            Lampa.Manifest.plugins = manifest;
 
-            // Just to init the settings panel
+            // Init plugin configuration
             const config = getConfig();
             config.use_auth = false;
             sendLogToAPI('Config loaded: {0}', [JSON.stringify(config)]);
             saveConfig(config);
+
+            // Register settings panel UI
+            if (window.appready) {
+                addSettingsTransmissionForwarder();
+                addTransmissionSettingsParams();
+            } else {
+                Lampa.Listener.follow('app', function (e) {
+                    if (e.type === 'ready') {
+                        sendLogToAPI('App ready event received, addSettingsTransmissionForwarder', []);
+                        addSettingsTransmissionForwarder();
+                        addTransmissionSettingsParams();
+                    }
+                });
+            }
 
             Lampa.Settings.listener.follow('open', (e) => {
                 console.log('Settings tab opened:', e.name); // Debug log
@@ -93,108 +111,121 @@ try {
 
         function getConfig() {
             return {
-                host: Lampa.Storage.get(storage_key + "_host", ''),
-                use_auth: Lampa.Storage.get(storage_key + "_use_auth", false),
-                user: Lampa.Storage.get(storage_key + "_user", ''),
-                pass: Lampa.Storage.get(storage_key + "_pass", '')
+                host: Lampa.Storage.get(CONFIG_KEY_HOST, ''),
+                use_auth: Lampa.Storage.get(CONFIG_KEY_USE_AUTH, false),
+                user: Lampa.Storage.get(CONFIG_KEY_USER, ''),
+                pass: Lampa.Storage.get(CONFIG_KEY_PASS, ''),
+                sessionId: Lampa.Storage.get(CONFIG_KEY_TRANSMISSION_SESSION, '')
             };
         }
 
         function saveConfig(config) {
-            Lampa.Storage.set(storage_key + "_host", config.host);
-            Lampa.Storage.set(storage_key + "_use_auth", config.use_auth);
-            Lampa.Storage.set(storage_key + "_user", config.user);
-            Lampa.Storage.set(storage_key + "_pass", config.pass);
+            Lampa.Storage.set(CONFIG_KEY_HOST, config.host);
+            Lampa.Storage.set(CONFIG_KEY_USE_AUTH, config.use_auth);
+            Lampa.Storage.set(CONFIG_KEY_USER, config.user);
+            Lampa.Storage.set(CONFIG_KEY_PASS, config.pass);
+            Lampa.Storage.set(CONFIG_KEY_TRANSMISSION_SESSION, config.sessionId);
         }
 
         function addSettingsTransmissionForwarder() {
-            if (Lampa.Settings.main && Lampa.Settings.main() && !Lampa.Settings.main().render().find('[data-component="transmission_forwarder"]').length) {
-                sendLogToAPI('Translate field', []);
-                const field = $(Lampa.Lang.translate(`
-                    <div class="settings-folder selector" data-component="transmission_forwarder">
-                        <div class="settings-folder__icon">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="white"/>
-                            </svg>
-                        </div>
-                        <div class="settings-folder__name">Transmission Forwarder</div>
-                    </div>
-                `));
-
-                sendLogToAPI('Render field', []);
-                Lampa.Settings.main().render().find('[data-component="more"]').after(field);
-                sendLogToAPI('Update field', []);
-                Lampa.Settings.main().update();
+            if (!window.lampa_settings[plugin_id]) {
+                Lampa.SettingsApi.addComponent({
+                    component: plugin_id,
+                    icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="currentColor"/></svg>',
+                    name: 'Transmission Forwarder'
+                });
             }
         }
 
-
-        function renderSettings(e) {
-            if (e.name !== undefined && e.name.includes(plugin_id)){
-                sendLogToAPI('Received event: {0}', [e.name]);
-            }
-            if (e.name !== plugin_id) return;
-
-            sendLogToAPI('Try render settings', []);
-
-            const config = getConfig();
-
-            const renderTarget = e.body;
-            sendLogToAPI('renderTarget: {0}', [renderTarget]);
-            const template = Lampa.Template.get('settings_transmission_forwarder', {});
-            sendLogToAPI('template: {0}', [template]);
-            renderTarget.html(template);
-
-            const hostInput = renderTarget.find(`[data-name="${storage_key}_host"]`);
-            const authToggle = renderTarget.find(`[data-name="${storage_key}_use_auth"]`);
-            const userInput = renderTarget.find(`[data-name="${storage_key}_user"]`);
-            const passInput = renderTarget.find(`[data-name="${storage_key}_pass"]`);
-
-            // Initialize inputs with current config values
-            hostInput.text(config.host);
-            authToggle.find('.settings-param__value').text(config.use_auth ? '✔' : '✖');
-            if (config.use_auth) {
-                userInput.show().find('.settings-param__input').text(config.user);
-                passInput.show().find('.settings-param__input').text(config.pass);
-            }
-
-            // Add event listeners for inputs
-            hostInput.on('hover:enter', () => {
-                Lampa.Utils.input('Transmission Host', config.host, (newVal) => {
-                    config.host = newVal;
-                    saveConfig(config);
-                    hostInput.text(newVal);
-                });
-            });
-
-            authToggle.on('hover:enter', () => {
-                config.use_auth = !config.use_auth;
-                saveConfig(config);
-                authToggle.find('.settings-param__value').text(config.use_auth ? '✔' : '✖');
-                if (config.use_auth) {
-                    userInput.show();
-                    passInput.show();
-                } else {
-                    userInput.hide();
-                    passInput.hide();
+        function addTransmissionSettingsParams() {
+            Lampa.SettingsApi.addParam({
+                component: plugin_id,
+                param: {
+                    type: 'title'
+                },
+                field: {
+                    name: 'Transmission Settings'
                 }
             });
-
-            userInput.on('hover:enter', () => {
-                Lampa.Utils.input('Username', config.user, (newVal) => {
-                    config.user = newVal;
-                    saveConfig(config);
-                    userInput.find('.settings-param__input').text(newVal);
-                });
+    
+            Lampa.SettingsApi.addParam({
+                component: plugin_id,
+                param: {
+                    name: CONFIG_KEY_HOST,
+                    type: 'input',
+                    default: ''
+                },
+                field: {
+                    name: 'Transmission Host',
+                    description: 'Enter the Transmission RPC URL (e.g., http://192.168.1.100:9091)'
+                },
+                onChange: (value) => {
+                    Lampa.Storage.set(CONFIG_KEY_HOST, value);
+                }
             });
-
-            passInput.on('hover:enter', () => {
-                Lampa.Utils.input('Password', config.pass, (newVal) => {
-                    config.pass = newVal;
-                    saveConfig(config);
-                    passInput.find('.settings-param__input').text(newVal);
-                });
+    
+            Lampa.SettingsApi.addParam({
+                component: plugin_id,
+                param: {
+                    name: CONFIG_KEY_USE_AUTH,
+                    type: 'trigger',
+                    default: false
+                },
+                field: {
+                    name: 'Use Authentication',
+                    description: 'Enable or disable authentication for Transmission'
+                },
+                onChange: (value) => {
+                    Lampa.Storage.set(CONFIG_KEY_USE_AUTH, value);
+                    setAuthFieldsVisible(value);
+                    sendLogToAPI('Authentication setting changed: {0}', [value]);
+                }
             });
+    
+            Lampa.SettingsApi.addParam({
+                component: plugin_id,
+                param: {
+                    name: CONFIG_KEY_USER,
+                    type: 'input',
+                    default: ''
+                },
+                field: {
+                    name: 'Username',
+                    description: 'Enter the username for Transmission authentication'
+                },
+                onChange: (value) => {
+                    Lampa.Storage.set(CONFIG_KEY_USER, value);
+                }
+            });
+    
+            Lampa.SettingsApi.addParam({
+                component: plugin_id,
+                param: {
+                    name: CONFIG_KEY_PASS,
+                    type: 'input',
+                    default: ''
+                },
+                field: {
+                    name: 'Password',
+                    description: 'Enter the password for Transmission authentication'
+                },
+                onChange: (value) => {
+                    Lampa.Storage.get(CONFIG_KEY_PASS, value);
+                }
+            });
+        }
+
+        function setAuthFieldsVisible(visible) {        
+            const usernameField = $(`div[data-name="${CONFIG_KEY_USER}"]`);
+            const passwordField = $(`div[data-name="${CONFIG_KEY_PASS}"]`);
+        
+            if (visible) {
+                usernameField.show();
+                passwordField.show();
+            } else {
+                usernameField.hide();
+                passwordField.hide();
+            }
         }
 
         async function fetchTorrent(url) {
@@ -214,7 +245,7 @@ try {
             function makeRequest() {
                 const headers = {
                     'Content-Type': 'application/json',
-                    'X-Transmission-Session-Id': sessionId || ''
+                    'X-Transmission-Session-Id': config.sessionId || ''
                 };
 
                 if (config.use_auth && config.user && config.pass) {
@@ -236,7 +267,8 @@ try {
                     body: JSON.stringify(body)
                 }).then(async res => {
                     if (res.status === 409) {
-                        sessionId = res.headers.get('X-Transmission-Session-Id');
+                        config.sessionId = res.headers.get('X-Transmission-Session-Id');
+                        saveConfig(config);
                         makeRequest(); // retry
                     } else {
                         const data = await res.json();
@@ -269,35 +301,6 @@ try {
             });
         }
 
-        const settingsTemplate =
-        `    <div class="settings-screen">
-                <div class="settings-header">
-                    <div class="settings-header__title">Transmission Forwarder</div>
-                </div>
-                <div class="settings-body">
-                    <div class="settings-param">
-                        <div class="settings-param__name">Transmission Host (e.g. http://192.168.1.100:9091)</div>
-                        <div class="settings-param__input" data-name="${storage_key}_host"></div>
-                    </div>
-                    <div class="settings-param selector" data-name="${storage_key}_use_auth">
-                        <div class="settings-param__name">Use Authentication</div>
-                        <div class="settings-param__value"></div>
-                    </div>
-                    <div class="settings-param" data-name="${storage_key}_user" style="display: none;">
-                        <div class="settings-param__name">Username</div>
-                        <div class="settings-param__input"></div>
-                    </div>
-                    <div class="settings-param" data-name="${storage_key}_pass" style="display: none;">
-                        <div class="settings-param__name">Password</div>
-                        <div class="settings-param__input"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Register the template with Lampa
-        Lampa.Template.add('settings_transmission_forwarder', settingsTemplate);
-        sendLogToAPI('settings_transmission_forwarder template registered', []);
         init(); // run immediately
     })();
 } catch (err) {
