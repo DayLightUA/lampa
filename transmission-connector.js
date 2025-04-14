@@ -152,72 +152,72 @@ try {
                 }
             });
 
-            Lampa.SettingsApi.addParam({
-                component: plugin_id,
-                param: {
-                    name: CONFIG_KEY_HOST,
-                    type: 'input',
-                    default: ''
-                },
-                field: {
-                    name: 'Transmission Host',
-                    description: 'Enter the Transmission RPC URL (e.g., http://192.168.1.100:9091)'
-                },
-                onChange: (value) => {
-                    Lampa.Storage.set(CONFIG_KEY_HOST, value);
-                }
-            });
+            // Lampa.SettingsApi.addParam({
+            //     component: plugin_id,
+            //     param: {
+            //         name: CONFIG_KEY_HOST,
+            //         type: 'input',
+            //         default: ''
+            //     },
+            //     field: {
+            //         name: 'Transmission Host',
+            //         description: 'Enter the Transmission RPC URL (e.g., http://192.168.1.100:9091)'
+            //     },
+            //     onChange: (value) => {
+            //         Lampa.Storage.set(CONFIG_KEY_HOST, value);
+            //     }
+            // });
 
-            Lampa.SettingsApi.addParam({
-                component: plugin_id,
-                param: {
-                    name: CONFIG_KEY_USE_AUTH,
-                    type: 'trigger',
-                    default: false
-                },
-                field: {
-                    name: 'Use Authentication',
-                    description: 'Enable or disable authentication for Transmission'
-                },
-                onChange: (value) => {
-                    Lampa.Storage.set(CONFIG_KEY_USE_AUTH, value);
-                    setAuthFieldsVisible(value);
-                    sendLogToAPI('Authentication setting changed: {0}', [value]);
-                }
-            });
+            // Lampa.SettingsApi.addParam({
+            //     component: plugin_id,
+            //     param: {
+            //         name: CONFIG_KEY_USE_AUTH,
+            //         type: 'trigger',
+            //         default: false
+            //     },
+            //     field: {
+            //         name: 'Use Authentication',
+            //         description: 'Enable or disable authentication for Transmission'
+            //     },
+            //     onChange: (value) => {
+            //         Lampa.Storage.set(CONFIG_KEY_USE_AUTH, value);
+            //         setAuthFieldsVisible(value);
+            //         sendLogToAPI('Authentication setting changed: {0}', [value]);
+            //     }
+            // });
 
-            Lampa.SettingsApi.addParam({
-                component: plugin_id,
-                param: {
-                    name: CONFIG_KEY_USER,
-                    type: 'input',
-                    default: ''
-                },
-                field: {
-                    name: 'Username',
-                    description: 'Enter the username for Transmission authentication'
-                },
-                onChange: (value) => {
-                    Lampa.Storage.set(CONFIG_KEY_USER, value);
-                }
-            });
+            // Lampa.SettingsApi.addParam({
+            //     component: plugin_id,
+            //     param: {
+            //         name: CONFIG_KEY_USER,
+            //         type: 'input',
+            //         default: ''
+            //     },
+            //     field: {
+            //         name: 'Username',
+            //         description: 'Enter the username for Transmission authentication'
+            //     },
+            //     onChange: (value) => {
+            //         Lampa.Storage.set(CONFIG_KEY_USER, value);
+            //     }
+            // });
 
-            Lampa.SettingsApi.addParam({
-                component: plugin_id,
-                param: {
-                    name: CONFIG_KEY_PASS,
-                    type: 'input',
-                    default: ''
-                },
-                field: {
-                    name: 'Password',
-                    description: 'Enter the password for Transmission authentication'
-                },
-                onChange: (value) => {
-                    Lampa.Storage.get(CONFIG_KEY_PASS, value);
-                }
-            });
-            setAuthFieldsVisible(Lampa.Storage.get(CONFIG_KEY_USE_AUTH, false));
+            // Lampa.SettingsApi.addParam({
+            //     component: plugin_id,
+            //     param: {
+            //         name: CONFIG_KEY_PASS,
+            //         type: 'input',
+            //         default: ''
+            //     },
+            //     field: {
+            //         name: 'Password',
+            //         description: 'Enter the password for Transmission authentication'
+            //     },
+            //     onChange: (value) => {
+            //         Lampa.Storage.get(CONFIG_KEY_PASS, value);
+            //     }
+            // });
+            // setAuthFieldsVisible(Lampa.Storage.get(CONFIG_KEY_USE_AUTH, false));
         }
 
         function setAuthFieldsVisible(visible) {
