@@ -156,8 +156,7 @@ try {
                 component: plugin_id,
                 param: {
                     name: CONFIG_KEY_HOST,
-                    type: 'input',
-                    default: 'http://192.168.1.100:9091'
+                    type: 'input'
                 },
                 field: {
                     name: 'Transmission Host',
