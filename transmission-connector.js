@@ -130,6 +130,13 @@ try {
                     icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="currentColor"/></svg>',
                     name: 'Transmission Forwarder'
                 });
+            } else {
+                sendLogToAPI('Fallback Create settings component {0}', [plugin_id]);
+                Lampa.SettingsApi.addComponent({
+                    component: plugin_id,
+                    icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15 8H9L12 2ZM2 9H22V11H2V9ZM4 13H20V15H4V13ZM6 17H18V19H6V17Z" fill="currentColor"/></svg>',
+                    name: 'Transmission Forwarder'
+                });
             }
         }
 
@@ -216,8 +223,8 @@ try {
         function setAuthFieldsVisible(visible) {
             const usernameField = $(`div[data-name="${CONFIG_KEY_USER}"]`);
             const passwordField = $(`div[data-name="${CONFIG_KEY_PASS}"]`);
-            sendLogToAPI('usernameField: {0}', [JSON.stringify(usernameField)]);
-            sendLogToAPI('passwordField: {0}', [JSON.stringify(passwordField)]);
+            sendLogToAPI('usernameField: {0}', [usernameField.prop('outerHTML')]);
+            sendLogToAPI('passwordField: {0}', [passwordField.prop('outerHTML')]);
 
             if (visible) {
                 usernameField.show();
