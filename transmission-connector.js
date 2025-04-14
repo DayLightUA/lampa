@@ -225,7 +225,7 @@ try {
                 const usernameField = $(`div[data-name="${CONFIG_KEY_USER}"]`);
                 const passwordField = $(`div[data-name="${CONFIG_KEY_PASS}"]`);
         
-                if (usernameField.length === 0 || passwordField.length === 0) {
+                if (usernameField === undefined || passwordField === undefined || usernameField.length === 0 || passwordField.length === 0) {
                     sendLogToAPI('Error: Username or Password field not found', []);
                     return;
                 }
