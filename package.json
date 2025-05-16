@@ -1,0 +1,9 @@
+{
+  "name": "transmission-connector",
+  "version": "0.0.1",
+  "description": "Lampa plugin",
+  "scripts": {},
+  "dependencies": {
+    "lampa": "file:../lampa-source"
+  }
+}
